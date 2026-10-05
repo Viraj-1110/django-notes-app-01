@@ -1,29 +1,52 @@
-@Library('Shared')_
-pipeline{
-    agent { label 'dev-server'}
-    
-    stages{
-        stage("Code clone"){
-            steps{
-                sh "whoami"
-            clone("https://github.com/LondheShubham153/django-notes-app.git","main")
+@Library('jenkins-shared-library@main') _
+
+pipeline {
+    agent {
+        label 'Jenkins_slave'
+    }
+
+    stages {
+
+        stage('Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/Viraj-1110/django-notes-app-01.git'
+
+                script {
+                    env.IMAGE_TAG = sh(
+                        script: 'git rev-parse HEAD',
+                        returnStdout: true
+                    ).trim()
+                }
             }
         }
-        stage("Code Build"){
-            steps{
-            dockerbuild("notes-app","latest")
+
+        stage('Shared Library Build Test') {
+            steps {
+                dockerBuild('django-notes-app')
             }
         }
-        stage("Push to DockerHub"){
-            steps{
-                dockerpush("dockerHubCreds","notes-app","latest")
+
+        stage('Test') {
+            steps {
+                sh 'docker run --rm django-notes-app python manage.py check'
             }
         }
-        stage("Deploy"){
-            steps{
-                deploy()
+
+        stage('Docker Push to DockerHub') {
+            steps {
+                dockerPush(
+                    'django-notes-app',
+                    'virajmarane1110/django-notes-app',
+                    env.IMAGE_TAG
+                )
             }
         }
-        
+
+        stage('Deploy on Agent') {
+            steps {
+                dockerDeploy()
+            }
+        }
     }
 }
