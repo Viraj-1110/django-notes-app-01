@@ -14,7 +14,7 @@ services:
       - notes-app-nw
 
   django_app:
-    image: virajmarane1110/django-notes-app:latest
+    image: virajmarane1110/django-notes-app:${IMAGE_TAG}
     container_name: "django_cont"
     ports:
       - "8000:8000"
